@@ -254,6 +254,7 @@ def subMain(dataFrame, sideBar):
     with col1:
         st.write('')
     with col2:
+        st.write([picture from](https://theconversation.com/krakatoa-is-still-active-and-we-are-not-ready-for-the-tsunamis-another-eruption-would-generate-147250))
         if st.button('picture from'):
             webbrowser.open_new_tab(image2Link)
     
