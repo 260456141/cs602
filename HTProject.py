@@ -311,8 +311,6 @@ def subMain(dataFrame, sideBar):
 
 
 def footer():
-    # Getting a space from the main part.
-    st.markdown('#')
     # Bentley University Logo:
     col1, col2 = st.beta_columns([1,5])
     with col1:
