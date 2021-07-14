@@ -2,17 +2,19 @@
 Name:    Haoze Tan
 CS602:   Section 1
 Data:    Volcanic Eruptions
-URL:     https://share.streamlit.io/260456141/cs602/main/HTProject.py
+URL:     
 
 Description:
 This program depends on the volcanoes data, to develop a website by using python and streamlit.
 let users custom filter to show the data, concluding show the dataFrame, making map, and plotting charts.
 '''
 
+import numpy as np
 import streamlit as st
 import pandas as pd
 from PIL import Image
 import matplotlib.pyplot as plt
+import pydeck as pdk
 
 
 # Read file by using and returning pandas data frame, and also deleted the colums which are not will be used.
@@ -113,12 +115,56 @@ def welcomePage(showTitle, primaryChoice):
             st.write(f'[Video from]({str(videoLink)})')
 
 
-# Show map part: (not finish)____________________________________________________
-def map(data):
-    st.subheader('This is the Map')
+# pivotTable to show the average elevation of the volcanoes
+def pivotTable(data, sideBar):
+    # Set data and text words.
     dataFrame = pd.DataFrame(data)
-    dataFrame = dataFrame.rename(columns = {'Latitude': 'lat', 'Longitude': 'lon'}, inplace = False)
-    st.map(dataFrame)
+    if sideBar[1] == f'-- Select {sideBar[0]} --' or sideBar[2]:
+        sideBar[1] = ''
+    # Making table:
+    if len(dataFrame) > 1 and sideBar[0] != 'Elevation (m)': 
+        st.write(f'The average elevation of {sideBar[0]}  {sideBar[1]} as showed in the pivot table.')
+        table = pd.pivot_table(dataFrame, values = ['Elevation (m)'], index = [sideBar[0]], aggfunc = {'Elevation (m)': np.mean})
+        st.write(table)
+
+
+# Show map part: (not finish)____________________________________________________
+def map(data, sideBar):
+    # Setting title and data.
+    if sideBar[2]:
+        st.subheader('This is the map of all Volcanoes.')
+    else:
+        st.subheader(f'This is the map of {sideBar[0]}: {sideBar[1]}.')
+    dataFrame = pd.DataFrame(data)
+    #dataFrame = dataFrame.rename(columns = {'Latitude': 'lat', 'Longitude': 'lon'}, inplace = False)
+    # Making map. (Not Finish, try professor)
+    if sideBar[2]:
+        z2 = st.sidebar.slider('Map: Zoom Factor', min_value= 0, max_value = 6, value = 0)
+    else:
+        z2 = st.sidebar.slider('Map: Zoom Factor', min_value= 0, max_value = 6, value = 3)
+    view_state = pdk.ViewState(
+        latitude= dataFrame["Latitude"].mean(),
+        longitude= dataFrame["Longitude"].mean(),
+        zoom = z2)
+    layer1 = pdk.Layer('ScatterplotLayer',
+                        data = dataFrame,
+                        pickable = True,
+                        opacity = 0.20,
+                        get_position = '[Longitude,Latitude]',
+                        get_radius = 15000,
+                        get_color = [255,100,50],
+                        )
+    tool_tip = {"html": "<b>Volcano Name:<b><br/> {Volcano Name} <br/> Type: {Primary Volcano Type} <br/>Lat: {Latitude} Long: {Longitude}",
+                "style": {"backgroundColor": "steelblue",
+                            "color": "black"}
+            }
+    map = pdk.Deck(
+        map_style= 'mapbox://styles/mapbox/dark-v10', #'mapbox://styles/mapbox/light-v10', #'mapbox://styles/mapbox/streets-v11',
+        layers = [layer1],
+        initial_view_state=view_state,
+        tooltip= tool_tip
+    )
+    st.pydeck_chart(map)
 
 
 # Get link of the single volcano by the number of filtered result is 1.
@@ -143,7 +189,7 @@ def findTopValue(pieNumberList, numberOfTop):
         pieNumberList.remove(maxValue)
         topNumberList.append(maxValue)
     return topNumberList
-    
+
 
 # Draw pie chart if the results of filtered data more than 1.
 def pieChart(data, columnName):
@@ -158,11 +204,7 @@ def pieChart(data, columnName):
     # if the number of pieces of pie over 6, Do Not show all pieces!
     # let user set pieces:
     if len(uniqueWords) > 6:
-        col1, col2 = st.beta_columns([2, 1])
-        with col1:
-            st.write('')
-        with col2:
-            st.warning('A large amount of data cannot be displayed completely.')
+        st.warning('A large amount of data cannot be displayed completely.')
         col1, col2 = st.beta_columns([2, 1])
         with col1:
             st.write('')
@@ -224,7 +266,7 @@ def barChart(data, columnName):
     ax.bar(nameList, elevationList)
     # if the element over 10 there is no X-axis tick lables.
     if len(nameList) >= 10:
-        st.info('Due to the large number of volcanoes, the name of the volcano has been hidden.')
+        st.info('Due to the large number of volcanoes, the name of the volcanoes has been hidden.')
         plt.setp(ax.get_xticklabels(), visible=False)
     # other rotation of xticks are depending on the length of filtered data:
     # example: Country:Armenia:BarChart:'Elevation (m)', len(dataFrame)=3 rotation = 0
@@ -296,14 +338,18 @@ def subMain(dataFrame, sideBar):
         st.write(f'This dataFrame showed {str(len(dataFrame))} volcanoes.')
     else: # the only result here is {len(dataFrame) = 1}
         st.write(f'This dataFrame showed {str(len(dataFrame))} volcanoe.')
+    
 
     # Part 2: map
-    map(dataFrame)
+    map(dataFrame, sideBar)
+    # Display the pivot table When there is a column selected and the length of data > 1.
+    if sideBar[0] != '-- Select a type for search --':
+        pivotTable(dataFrame, sideBar)
 
     # Part 3: charts
     # if the number volcanoes more than 1, they have the significance of contrast.
     if len(dataFrame) > 1:
-        st.subheader('This is chart part')
+        st.subheader('How would you like to make a chart?')
         chartChoice(dataFrame, sideBar)
     # if there is only 1 volcano, show the link to official website
     else: # the only result here is {len(dataFrame) = 1}
@@ -366,7 +412,7 @@ def main():
             st.subheader('The following data is based on the All Data')
             subMain(dataFrame, sideBarValue)
         else:
-            if sideBarValue[0] != '-- Select a type for search --' and sideBarValue[1] == '-- Select '+ sideBarValue[0] + ' --':
+            if sideBarValue[0] != '-- Select a type for search --' and sideBarValue[1] == f'-- Select {sideBarValue[0]} --':
                 st.sidebar.markdown(f'Please continue selecting a {str(sideBarValue[0])}.')
                 welcomePage(False, sideBarValue[0])
             else:
