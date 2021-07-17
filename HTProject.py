@@ -210,8 +210,7 @@ def circleChart(data):
                                     alt.X('Longitude'), 
                                     alt.Y('Latitude'),
                                     alt.Size('Elevation (m)', 
-                                        scale = alt.Scale(range = [dataFrame['Elevation (m)'].min(), 
-                                                                   dataFrame['Elevation (m)'].max()]),
+                                        scale = alt.Scale(range = [-500, 6000]),
                                         legend = alt.Legend(title = 'Elevation (m)')),
                                     alt.Color('Primary Volcano Type', 
                                         legend = alt.Legend(title = 'Primary Volcano Type'))
