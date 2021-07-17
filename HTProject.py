@@ -125,7 +125,7 @@ def pivotTable(data, sideBar):
         st.write(table)
 
 # HEX color convert to RGB:
-def convertColor(HEX = '#ffff33'):
+def convertColor(HEX):
     RGB = []
     HexadecimalLetter = ['a','b','c','d','e','f']
     HexadecimalNumber = [10, 11, 12, 13, 14, 15]
