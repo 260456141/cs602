@@ -2,19 +2,23 @@
 Name:    Haoze Tan
 CS602:   Section 1
 Data:    Volcanic Eruptions
-URL:     
+URL:     https://share.streamlit.io/260456141/cs602/main/HTProject.py
 
 Description:
 This program depends on the volcanoes data, to develop a website by using python and streamlit.
 let users custom filter to show the data, concluding show the dataFrame, making map, and plotting charts.
 '''
 
+from typing import Counter
 import numpy as np
+from pandas.core.frame import DataFrame
 import streamlit as st
 import pandas as pd
 from PIL import Image
 import matplotlib.pyplot as plt
 import pydeck as pdk
+import altair as alt
+
 
 
 # Read file by using and returning pandas data frame, and also deleted the colums which are not will be used.
@@ -114,18 +118,19 @@ def welcomePage(showTitle, primaryChoice):
 
 # pivotTable to show the average elevation of the volcanoes
 def pivotTable(data, sideBar):
-    # Set data and text words.
     dataFrame = pd.DataFrame(data)
-    if sideBar[1] == f'-- Select {sideBar[0]} --' or sideBar[2]:
-        sideBar[1] = ''
-    # Making table:
     if len(dataFrame) > 1 and sideBar[0] != 'Elevation (m)': 
-        st.write(f'The average elevation of {sideBar[0]}  {sideBar[1]} as showed in the pivot table.')
-        table = pd.pivot_table(dataFrame, values = ['Elevation (m)'], index = [sideBar[0]], aggfunc = {'Elevation (m)': np.mean})
+        # Making pivot table:
+        st.write('This is the pivot table for max, min, and meam of elevation.')
+        table = pd.pivot_table(dataFrame, values = ['Elevation (m)'], 
+                                            index = [sideBar[0]], 
+                                            aggfunc = {'Elevation (m)': [min,max,np.mean]})
         st.write(table)
+        st.write(f'{len(table)} {sideBar[0]}(s).')
+
 
 # HEX color convert to RGB:
-def convertColor(HEX):
+def convertColor(HEX = '#ffff33'):
     RGB = []
     HexadecimalLetter = ['a','b','c','d','e','f']
     HexadecimalNumber = [10, 11, 12, 13, 14, 15]
@@ -157,17 +162,21 @@ def map(data, sideBar):
         st.subheader(f'This is the map of {sideBar[0]}: {sideBar[1]}.')
     dataFrame = pd.DataFrame(data)
     # Making map.
-    # custom expander with: 1,zoom factor. 2,radius. 3,color
+    # custom expander with: 1,Map Mode. 2,zoom factor. 3,Font. 4,radius. 5,color
     expander = st.beta_expander(label='Map Setting')
     with expander:
-        mode = st.selectbox('Mode',['dark', 'light', 'streets'])
+        mode = st.selectbox('Mode',['dark', 'light', 'streets', 'satellite-streets'])
         customMode = f'mapbox://styles/mapbox/{mode}-v10'
+        customFont = st.radio('Font',["Cursive", "Monospace", "Times New Roman"])
         if sideBar[2]:
             customZoom = st.slider('Zoom Factor', min_value = 0, max_value = 7, value = 0)
         else:
             customZoom = st.slider('Zoom Factor', min_value = 0, max_value = 7, value = 3)
         customRadius = st.slider('Circle Radius', min_value = 1000, max_value = 60000, value = 30000)
         HEXcolor = st.color_picker('Pick A Color', '#ffff33')
+        bugLink = 'https://github.com/streamlit/streamlit/pull/3500'
+        txt = '*ColorPicker cannot work on Streamlit(0.84.0) Sharing, please try it on localhost.'
+        st.write(f'{txt} [Question]({str(bugLink)})')
         RGBcolor = convertColor(HEXcolor)
     # set value for map
     view_state = pdk.ViewState(
@@ -181,9 +190,8 @@ def map(data, sideBar):
                         get_position = '[Longitude,Latitude]',
                         get_radius = customRadius,
                         get_color = RGBcolor)
-    tool_tip = {"html": "<b>Volcano Name:<b><br/> {Volcano Name} <br/> Type: {Primary Volcano Type} <br/>Lat: {Latitude} Long: {Longitude}",
-                "style": {"color": "white"}
-            }
+    tool_tip = {"html": "<b>Volcano Name:<b><br/> {Volcano Name} <br/> Region: {Region} <br/> Type: {Primary Volcano Type} <br/>Lat: {Latitude} Long: {Longitude}",
+                "style": {"color": "white", "font-family": customFont}}
     map = pdk.Deck(
         map_style = customMode,
         layers = [layer],
@@ -191,6 +199,26 @@ def map(data, sideBar):
         tooltip = tool_tip
     )
     st.pydeck_chart(map)
+
+# display circleChart
+def circleChart(data):
+    dataFrame = pd.DataFrame(data)
+    Cchart = alt.Chart(data).mark_circle(
+            opacity = 0.5,
+            stroke = 'black',
+            strokeWidth = 1).encode(
+                                    alt.X('Longitude'), 
+                                    alt.Y('Latitude'),
+                                    alt.Size('Elevation (m)', 
+                                        scale = alt.Scale(range = [dataFrame['Elevation (m)'].min(), 
+                                                                   dataFrame['Elevation (m)'].max()]),
+                                        legend = alt.Legend(title = 'Elevation (m)')),
+                                    alt.Color('Primary Volcano Type', 
+                                        legend = alt.Legend(title = 'Primary Volcano Type'))
+                            ).properties(
+                                    width = 700,
+                                    height = 500)
+    st.write(Cchart)
 
 
 # Get link of the single volcano by the number of filtered result is 1.
@@ -281,22 +309,24 @@ def pieChart(data, columnName):
 # Draw bar chart if the results of filtered data more than 1.
 # Because of the large amount of all data and the same data type of 'Elevation (m)',
 # if all data is True or the filter primary choice is 'Elevation (m)', there is no access to draw a bar chart.
-def barChart(data, columnName):
+def barChart(data, columnName, sideBar):
     # Setting the data frame and elevation list.
     dataFrame = pd.DataFrame(data)
     elevationList = dataFrame[columnName].to_list()
     nameList = dataFrame['Volcano Name'].to_list()
     # Plotting bar chart
-    st.subheader('This is the bar chart')
+    col1, col2, col3 = st.beta_columns([1, 6, 1])
+    with col2:
+        st.subheader(f'This is the {columnName} of {sideBar[0]}:{sideBar[1]}')
     fig, ax = plt.subplots()
     ax.bar(nameList, elevationList)
     # if the element over 10 there is no X-axis tick lables.
     if len(nameList) >= 10:
         st.info('Due to the large number of volcanoes, the name of the volcanoes has been hidden.')
-        plt.setp(ax.get_xticklabels(), visible=False)
+        plt.setp(ax.get_xticklabels(), visible = False)
     # other rotation of xticks are depending on the length of filtered data:
-    # example: Country:Armenia:BarChart:'Elevation (m)', len(dataFrame)=3 rotation = 0
-    # example: Country:China:BarChart:'Elevation (m)', len(dataFrame)=9 rotation = 90
+    # example: Country:Armenia:BarChart:'Elevation (m)', len(dataFrame) = 3, rotation = 0
+    # example: Country:China:BarChart:'Elevation (m)', len(dataFrame) = 9, rotation = 90
     elif len(nameList) > 3 and len(nameList) < 10:
         rotation = int(len(nameList)) * 10
         plt.xticks(rotation = rotation)
@@ -333,13 +363,15 @@ def chartChoice(data, sideBar):
             st.write('⬅ Please select a chart type')
     # Depends on the chart choice, calling the different chart functions.
     if primaryChartChoice == 'Pie Chart' and secondaryChartChoice != '-- Select a data type --':
-        if sideBar[2]:
-            st.write(f'Here is the pie chart is about {str(secondaryChartChoice)} based on all data.'  )
-        else:
-            st.write(f'Here is the pie chart based on {str(sideBar[0])}: {str(sideBar[1])}, and {str(secondaryChartChoice)}.') 
+        col1, col2, col3 = st.beta_columns([1, 6, 1])
+        with col2:
+            if sideBar[2]:
+                st.write(f'Here is the pie chart is about {str(secondaryChartChoice)} based on all data.'  )
+            else:
+                st.write(f'Here is the pie chart based on {str(sideBar[0])}: {str(sideBar[1])}, and {str(secondaryChartChoice)}.') 
         pieChart(dataFrame, secondaryChartChoice)
     elif primaryChartChoice == 'Bar Chart' and secondaryChartChoice != '-- Select a data type --':
-        barChart(dataFrame, secondaryChartChoice)
+        barChart(dataFrame, secondaryChartChoice, sideBar)
     
 
 # Organize the overall structure and order of the web page when the user selected data.
@@ -360,19 +392,22 @@ def subMain(dataFrame, sideBar):
     else:
         st.subheader(f'This is the Data Frame of {str(sideBar[0])}: {str(sideBar[1])}.')
     st.write(dataFrame)
-    if len(dataFrame) > 1:
-        st.write(f'This dataFrame showed {str(len(dataFrame))} volcanoes.')
-    else: # the only result here is {len(dataFrame) = 1}
-        st.write(f'This dataFrame showed {str(len(dataFrame))} volcanoe.')
-    
+    st.write(f'This dataFrame showed {str(len(dataFrame))} volcano(es).')
 
-    # Part 2: map
-    map(dataFrame, sideBar)
+    # Part 2:pivot table
     # Display the pivot table When there is a column selected and the length of data > 1.
     if sideBar[0] != '-- Select a type for search --':
         pivotTable(dataFrame, sideBar)
+    
 
-    # Part 3: charts
+    # Part 3: map
+    map(dataFrame, sideBar)
+
+    # Part 4: Circle Chart
+    # if sideBar[0] not in ['Primary Volcano Type', 'Activity Evidence']:
+    circleChart(dataFrame)
+    
+    # Part 4: charts
     # if the number volcanoes more than 1, they have the significance of contrast.
     if len(dataFrame) > 1:
         st.subheader('How would you like to make a chart?')
@@ -391,8 +426,6 @@ def footer():
         st.markdown('***')
     # Footer information    
     col1, col2, col3, col4= st.beta_columns([1,2,3,1])
-    with col1:
-        st.write('')
     with col2:
         st.write('Author: Haoze Tan')
     with col3:
@@ -412,7 +445,6 @@ def footer():
 #       6, Footer.
 def main():
     # Read file.
-    FILENAME = 'volcanoes.csv'
     originalData = readFile(FILENAME)
 
     # Search filter data.
@@ -449,7 +481,7 @@ def main():
     footer()
 
 
-
+FILENAME = 'volcanoes.csv'
 main()
 
 
