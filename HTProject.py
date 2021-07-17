@@ -121,7 +121,7 @@ def pivotTable(data, sideBar):
     dataFrame = pd.DataFrame(data)
     if len(dataFrame) > 1 and sideBar[0] != 'Elevation (m)': 
         # Making pivot table:
-        st.write('This is the pivot table for max, min, and meam of elevation.')
+        st.write('This is the pivot table for max, min, and mean of elevation.')
         table = pd.pivot_table(dataFrame, values = ['Elevation (m)'], 
                                             index = [sideBar[0]], 
                                             aggfunc = {'Elevation (m)': [min,max,np.mean]})
