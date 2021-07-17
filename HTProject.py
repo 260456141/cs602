@@ -96,8 +96,6 @@ def welcomePage(showTitle, primaryChoice):
         image1 = Image.open('volcano ne.jpg')
         st.image(image1, caption = 'Mount Sinabung')
         col1, col2 = st.beta_columns([4, 1])
-        with col1:
-            st.write('')
         with col2:
             st.write(f'[Picture from]({str(image1Link)})')
     # Display page with data filtering incomplete.
@@ -109,10 +107,9 @@ def welcomePage(showTitle, primaryChoice):
         videoBytes = video.read()
         st.video(videoBytes)
         col1, col2 = st.beta_columns([4, 1])
-        with col1:
-            st.write('')
         with col2:
             st.write(f'[Video from]({str(videoLink)})')
+        st.write('*This video may not load on Chrome. Please try it on Safari or Edge.')
 
 
 # pivotTable to show the average elevation of the volcanoes
@@ -127,8 +124,31 @@ def pivotTable(data, sideBar):
         table = pd.pivot_table(dataFrame, values = ['Elevation (m)'], index = [sideBar[0]], aggfunc = {'Elevation (m)': np.mean})
         st.write(table)
 
+# HEX color convert to RGB:
+def convertColor(HEX = '#ffff33'):
+    RGB = []
+    HexadecimalLetter = ['a','b','c','d','e','f']
+    HexadecimalNumber = [10, 11, 12, 13, 14, 15]
+    index = 0
+    start = 1
+    for group in range(3):
+        result = 0
+        number = 0
+        for i in HEX[start:start+2]:
+            if i in HexadecimalLetter:
+                number = HexadecimalNumber[HexadecimalLetter.index(i)]
+            else:
+                number = i
+            if index % 2 == 0:
+                result += int(number) * 16
+            else:
+                result += int(number)
+            index += 1
+        RGB.append(result)
+        start += 2
+    return RGB
 
-# Show map part: (not finish)____________________________________________________
+# Show map part:
 def map(data, sideBar):
     # Setting title and data.
     if sideBar[2]:
@@ -136,33 +156,39 @@ def map(data, sideBar):
     else:
         st.subheader(f'This is the map of {sideBar[0]}: {sideBar[1]}.')
     dataFrame = pd.DataFrame(data)
-    #dataFrame = dataFrame.rename(columns = {'Latitude': 'lat', 'Longitude': 'lon'}, inplace = False)
-    # Making map. (Not Finish, try professor)
-    if sideBar[2]:
-        z2 = st.sidebar.slider('Map: Zoom Factor', min_value= 0, max_value = 6, value = 0)
-    else:
-        z2 = st.sidebar.slider('Map: Zoom Factor', min_value= 0, max_value = 6, value = 3)
+    # Making map.
+    # custom expander with: 1,zoom factor. 2,radius. 3,color
+    expander = st.beta_expander(label='Map Setting')
+    with expander:
+        mode = st.selectbox('Mode',['dark', 'light', 'streets'])
+        customMode = f'mapbox://styles/mapbox/{mode}-v10'
+        if sideBar[2]:
+            customZoom = st.slider('Zoom Factor', min_value = 0, max_value = 7, value = 0)
+        else:
+            customZoom = st.slider('Zoom Factor', min_value = 0, max_value = 7, value = 3)
+        customRadius = st.slider('Circle Radius', min_value = 1000, max_value = 60000, value = 30000)
+        HEXcolor = st.color_picker('Pick A Color', '#ffff33')
+        RGBcolor = convertColor(HEXcolor)
+    # set value for map
     view_state = pdk.ViewState(
-        latitude= dataFrame["Latitude"].mean(),
-        longitude= dataFrame["Longitude"].mean(),
-        zoom = z2)
-    layer1 = pdk.Layer('ScatterplotLayer',
+        latitude = dataFrame["Latitude"].mean(),
+        longitude = dataFrame["Longitude"].mean(),
+        zoom = customZoom)
+    layer = pdk.Layer('ScatterplotLayer',
                         data = dataFrame,
                         pickable = True,
-                        opacity = 0.20,
+                        opacity = 0.40, # the transparency of the circle
                         get_position = '[Longitude,Latitude]',
-                        get_radius = 15000,
-                        get_color = [255,100,50],
-                        )
+                        get_radius = customRadius,
+                        get_color = RGBcolor)
     tool_tip = {"html": "<b>Volcano Name:<b><br/> {Volcano Name} <br/> Type: {Primary Volcano Type} <br/>Lat: {Latitude} Long: {Longitude}",
-                "style": {"backgroundColor": "steelblue",
-                            "color": "black"}
+                "style": {"color": "white"}
             }
     map = pdk.Deck(
-        map_style= 'mapbox://styles/mapbox/dark-v10', #'mapbox://styles/mapbox/light-v10', #'mapbox://styles/mapbox/streets-v11',
-        layers = [layer1],
-        initial_view_state=view_state,
-        tooltip= tool_tip
+        map_style = customMode,
+        layers = [layer],
+        initial_view_state = view_state,
+        tooltip = tool_tip
     )
     st.pydeck_chart(map)
 
@@ -319,9 +345,9 @@ def chartChoice(data, sideBar):
 # Organize the overall structure and order of the web page when the user selected data.
 def subMain(dataFrame, sideBar):
     # Here is the image of the volcano erupting
-    image2Link = 'https://theconversation.com/krakatoa-is-still-active-and-we-are-not-ready-for-the-tsunamis-another-eruption-would-generate-147250'
+    image2Link = 'https://www.bloomberg.com/news/articles/2021-01-17/indonesian-volcano-spews-ash-as-officials-grapple-with-disasters'
     image2 = Image.open('volcano e.jpg')
-    st.image(image2, caption = 'Krakatoa volcano')
+    st.image(image2, caption = 'Mount Semeru Volcano')
     col1, col2 = st.beta_columns([4, 1])
     with col1:
         st.write('')
@@ -386,8 +412,8 @@ def footer():
 #       6, Footer.
 def main():
     # Read file.
-    fileName = 'volcanoes.csv'
-    originalData = readFile(fileName)
+    FILENAME = 'volcanoes.csv'
+    originalData = readFile(FILENAME)
 
     # Search filter data.
     filteredData, filterPrimaryChoice, filterSecondaryChoice = filter(originalData)
