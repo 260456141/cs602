@@ -284,14 +284,16 @@ def pieChart(data, columnName):
         with col2:
             input = st.selectbox('Please select the top number to display.', [1, 2, 3, 4, 5, 6], index = 3)
         # Prevent all items in an element are appearing only once, thus chaos the new word list.
-        # '2' is a fault-tolerant value that prevents an element from having a small amount of repetition.
-        if abs(len(uniqueWords) - len(dataList)) > 2:
+        if abs(len(uniqueWords) - len(dataList)) > 0:
             numberListCopy = numberList.copy()
             shortNumberList = findTopValue(numberList, input)
             shortWordList = []
             for number in shortNumberList:
                 pos = numberListCopy.index(number)
-                shortWordList.append(uniqueWords[pos])
+                if uniqueWords[pos] not in shortWordList:
+                    shortWordList.append(uniqueWords[pos])
+                    numberListCopy.remove(numberListCopy[pos])
+                    uniqueWords.remove(uniqueWords[pos])
             otherName = 'Other'
             otherNumber = 0
             for number in numberList:
