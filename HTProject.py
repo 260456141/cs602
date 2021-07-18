@@ -16,6 +16,7 @@ from PIL import Image
 import matplotlib.pyplot as plt
 import pydeck as pdk
 import altair as alt
+import csv
 
 
 
@@ -132,17 +133,27 @@ def pivotTable(data, sideBar):
 def map(data, sideBar):
     # HEX color convert to RGB:
     def convertColor(HEX = '#ffff33'):
+        # read file to avoid hardcoding, and make sure use dictionary in this project.
+        fileName = 'hexadecimal.csv'
+        with open(fileName, mode = 'r') as f:
+            data = csv.DictReader(f)
+            HEXDict = {}
+            for line in data:
+                hexadecimal = line['hexadecimal']
+                decimal = line['decimal']
+                if hexadecimal not in HEXDict.keys():
+                    HEXDict[hexadecimal] = decimal
         RGB = []
-        HexadecimalLetter = ['a','b','c','d','e','f']
-        HexadecimalNumber = [10, 11, 12, 13, 14, 15]
         index = 0
         start = 1
-        for group in range(3):
+        # loop 3 times for adding 3 numbers of RGB.
+        for times in range(3):
             result = 0
             number = 0
+            # loop the string to identify the letters or numbers.
             for i in HEX[start:start+2]:
-                if i in HexadecimalLetter:
-                    number = HexadecimalNumber[HexadecimalLetter.index(i)]
+                if i in list(HEXDict.keys()):
+                    number = HEXDict[i]
                 else:
                     number = i
                 if index % 2 == 0:
