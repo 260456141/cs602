@@ -25,14 +25,15 @@ def readFile(fileName):
     dataFrame = pd.DataFrame(data, columns =['Volcano Name', 'Country', 'Primary Volcano Type', 'Activity Evidence', 'Last Known Eruption', 'Region', 'Latitude', 'Longitude', 'Elevation (m)', 'Link'])
     return dataFrame
 
-# Find the closest value of a numberList depends on the specificValue by using lambda.
-# This function is used to adjust the Elevation (m) in the filter.
-def findClosest(NumbersList, specificValue):
-    return NumbersList[min(range(len(NumbersList)), key = lambda number: abs(NumbersList[number] - specificValue))]
-
 
 # Filter main part in sidebar:
 def filter(originalData):
+    # Find the closest value of a numberList depends on the specificValue by using lambda.
+    # This function is used to adjust the Elevation (m) in the filter.
+    def findClosest(NumbersList, specificValue):
+        return NumbersList[min(range(len(NumbersList)), key = lambda number: abs(NumbersList[number] - specificValue))]
+
+
     # set data frame
     dataFrame = pd.DataFrame(originalData)
 
@@ -127,32 +128,33 @@ def pivotTable(data, sideBar):
         st.write(f'{len(table)} {sideBar[0]}(s).')
 
 
-# HEX color convert to RGB:
-def convertColor(HEX = '#ffff33'):
-    RGB = []
-    HexadecimalLetter = ['a','b','c','d','e','f']
-    HexadecimalNumber = [10, 11, 12, 13, 14, 15]
-    index = 0
-    start = 1
-    for group in range(3):
-        result = 0
-        number = 0
-        for i in HEX[start:start+2]:
-            if i in HexadecimalLetter:
-                number = HexadecimalNumber[HexadecimalLetter.index(i)]
-            else:
-                number = i
-            if index % 2 == 0:
-                result += int(number) * 16
-            else:
-                result += int(number)
-            index += 1
-        RGB.append(result)
-        start += 2
-    return RGB
-
 # Show map part:
 def map(data, sideBar):
+    # HEX color convert to RGB:
+    def convertColor(HEX = '#ffff33'):
+        RGB = []
+        HexadecimalLetter = ['a','b','c','d','e','f']
+        HexadecimalNumber = [10, 11, 12, 13, 14, 15]
+        index = 0
+        start = 1
+        for group in range(3):
+            result = 0
+            number = 0
+            for i in HEX[start:start+2]:
+                if i in HexadecimalLetter:
+                    number = HexadecimalNumber[HexadecimalLetter.index(i)]
+                else:
+                    number = i
+                if index % 2 == 0:
+                    result += int(number) * 16
+                else:
+                    result += int(number)
+                index += 1
+            RGB.append(result)
+            start += 2
+        return RGB
+
+
     # Setting title and data.
     if sideBar[2]:
         st.subheader('This is the map of all Volcanoes.')
@@ -230,23 +232,23 @@ def link(data):
     st.subheader(f'click {click} to get the link of {name}')
 
 
-# Find the top value by users' custom, which the pieces of pie more than 6.
-def findTopValue(pieNumberList, numberOfTop):
-    topNumberList = []
-    for times in range(0, numberOfTop): 
-        maxValue = pieNumberList[0] - 1
-        # Finding max
-        for n in range(len(pieNumberList)):     
-            if pieNumberList[n] > maxValue:
-                maxValue = pieNumberList[n]
-        # Delete for next time        
-        pieNumberList.remove(maxValue)
-        topNumberList.append(maxValue)
-    return topNumberList
-
-
 # Draw pie chart if the results of filtered data more than 1.
 def pieChart(data, columnName):
+    # Find the top value by users' custom, which the pieces of pie more than 6.
+    def findTopValue(pieNumberList, numberOfTop):
+        topNumberList = []
+        for times in range(0, numberOfTop): 
+            maxValue = pieNumberList[0] - 1
+            # Finding max
+            for n in range(len(pieNumberList)):     
+                if pieNumberList[n] > maxValue:
+                    maxValue = pieNumberList[n]
+            # Delete for next time        
+            pieNumberList.remove(maxValue)
+            topNumberList.append(maxValue)
+        return topNumberList
+    
+    
     # Setting data frame and data list
     dataFrame = pd.DataFrame(data)
     dataList = dataFrame[columnName].to_list()
