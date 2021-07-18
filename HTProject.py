@@ -381,8 +381,6 @@ def chartChoice(data, sideBar):
             secondaryChartChoice = st.selectbox('Please select a data type', pieSelectList)
         elif primaryChartChoice == 'Bar Chart':
             secondaryChartChoice = st.selectbox('Please select a data type', ['-- Select a data type --', 'Elevation (m)'])
-        else:
-            st.write('⬅ Please select a chart type')
     # Depends on the chart choice, calling the different chart functions.
     if primaryChartChoice == 'Pie Chart' and secondaryChartChoice != '-- Select a data type --':
         col1, col2, col3 = st.beta_columns([1, 6, 1])
