@@ -302,7 +302,9 @@ def pieChart(data, columnName):
     # Plotting Pie
     fig, ax = plt.subplots()
     ax.pie(numberList, explode = explode, labels = uniqueWords, autopct = '%.1f%%')
+    plt.style.use('bmh')
     st.pyplot(fig)
+    
             
 
 # Draw bar chart if the results of filtered data more than 1.
