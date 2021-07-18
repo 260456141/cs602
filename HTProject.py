@@ -9,9 +9,7 @@ This program depends on the volcanoes data, to develop a website by using python
 let users custom filter to show the data, concluding show the dataFrame, making map, and plotting charts.
 '''
 
-from typing import Counter
 import numpy as np
-from pandas.core.frame import DataFrame
 import streamlit as st
 import pandas as pd
 from PIL import Image
@@ -165,8 +163,8 @@ def map(data, sideBar):
     # custom expander with: 1,Map Mode. 2,zoom factor. 3,Font. 4,radius. 5,color
     expander = st.beta_expander(label='Map Setting')
     with expander:
-        mode = st.selectbox('Mode',['dark', 'light', 'streets', 'satellite-streets'])
-        customMode = f'mapbox://styles/mapbox/{mode}-v10'
+        mode = st.selectbox('Mode',['Dark', 'Light', 'Streets', 'Satellite-Streets'])
+        customMode = f'mapbox://styles/mapbox/{mode.lower()}-v10'
         customFont = st.radio('Font',["Cursive", "Monospace", "Times New Roman"])
         if sideBar[2]:
             customZoom = st.slider('Zoom Factor', min_value = 0, max_value = 7, value = 0)
@@ -203,7 +201,7 @@ def map(data, sideBar):
 # display circleChart
 def circleChart(data):
     dataFrame = pd.DataFrame(data)
-    Cchart = alt.Chart(data).mark_circle(
+    Cchart = alt.Chart(dataFrame).mark_circle(
             opacity = 0.5,
             stroke = 'black',
             strokeWidth = 1).encode(
@@ -217,6 +215,9 @@ def circleChart(data):
                             ).properties(
                                     width = 700,
                                     height = 500)
+    col1, col2, col3 = st.beta_columns([1,3,1])
+    with col2:
+        st.write('Relationship between Lon/Lat and Elevation')
     st.write(Cchart)
 
 
@@ -262,7 +263,7 @@ def pieChart(data, columnName):
         with col1:
             st.write('')
         with col2:
-            input = st.selectbox('Please select the top number to display.', [1, 2, 3, 4, 5, 6, 7, 8], index = 3)
+            input = st.selectbox('Please select the top number to display.', [1, 2, 3, 4, 5, 6], index = 3)
         # Prevent all items in an element are appearing only once, thus chaos the new word list.
         # '2' is a fault-tolerant value that prevents an element from having a small amount of repetition.
         if abs(len(uniqueWords) - len(dataList)) > 2:
@@ -304,7 +305,6 @@ def pieChart(data, columnName):
     ax.pie(numberList, explode = explode, labels = uniqueWords, autopct = '%.1f%%')
     plt.style.use('bmh')
     st.pyplot(fig)
-    
             
 
 # Draw bar chart if the results of filtered data more than 1.
@@ -399,7 +399,6 @@ def subMain(dataFrame, sideBar):
     # Display the pivot table When there is a column selected and the length of data > 1.
     if sideBar[0] != '-- Select a type for search --':
         pivotTable(dataFrame, sideBar)
-    
 
     # Part 3: map
     map(dataFrame, sideBar)
@@ -407,7 +406,7 @@ def subMain(dataFrame, sideBar):
     # Part 4: Circle Chart
     # if sideBar[0] not in ['Primary Volcano Type', 'Activity Evidence']:
     circleChart(dataFrame)
-    
+
     # Part 4: charts
     # if the number volcanoes more than 1, they have the significance of contrast.
     if len(dataFrame) > 1:
