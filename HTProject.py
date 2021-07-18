@@ -214,12 +214,16 @@ def map(data, sideBar):
 # display circleChart
 def circleChart(data):
     dataFrame = pd.DataFrame(data)
+    if len(data) > 1:
+        scale = alt.Scale(zero = False)
+    else:
+        scale = alt.Scale(zero = True)
     Cchart = alt.Chart(dataFrame).mark_circle(
             opacity = 0.5,
             stroke = 'black',
             strokeWidth = 1).encode(
-                                    alt.X('Longitude'), 
-                                    alt.Y('Latitude'),
+                                    alt.X('Longitude', scale = scale), 
+                                    alt.Y('Latitude', scale = scale),
                                     alt.Size('Elevation (m)', 
                                         scale = alt.Scale(range = [-500, 6000]),
                                         legend = alt.Legend(title = 'Elevation (m)')),
@@ -227,7 +231,9 @@ def circleChart(data):
                                         legend = alt.Legend(title = 'Primary Volcano Type'))
                             ).properties(
                                     width = 700,
-                                    height = 500)
+                                    height = 500).transform_filter(
+                                                                    alt.datum.Entity != 'All natural disasters'
+                                                                )
     col1, col2, col3 = st.beta_columns([1,3,1])
     with col2:
         st.write('Relationship between Lon/Lat and Elevation')
