@@ -19,7 +19,7 @@ import altair as alt
 import csv
 
 
-
+@st.cache
 # Read file by using and returning pandas data frame, and also deleted the colums which are not will be used.
 def readFile(fileName):
     data = pd.read_csv(fileName, encoding = 'ISO-8859-1')
