@@ -440,7 +440,7 @@ def footer():
     # Bentley University Logo:
     col1, col2 = st.beta_columns([1,5])
     with col1:
-        st.image('https://www.bentley.edu/sites/default/files/inline-images/Bentley_%20Institutional_Seal_Final%20Comp.jpg')
+        st.image('https://d2f5upgbvkx8pz.cloudfront.net/sites/default/files/inline-files/Bentley_Logo_Vertical_Centered_Blue.png')
     with col2:
         st.markdown('***')
     # Footer information    
